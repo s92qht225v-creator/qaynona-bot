@@ -184,8 +184,8 @@ Qoidalarni buzish ogohlantirish yoki blokka olib kelishi mumkin.''',
         # Moderation actions - Warn
         'warn_reply_required': '❌ Foydalanuvchini ogohlantirish uchun xabarga javob bering.',
         'warn_admin_error': '❌ Administratorni ogohantirish mumkin emas!',
-        'user_warned_banned': '⚠️ {user} **{max_warnings}** ogohlantirishga yetdi va **bloklandi**!',
-        'user_warned': '⚠️ **Ogohlangtirildi** {user}\n\n**Ogohlantirish:** {warnings}/{max_warnings}\n**Sabab:** {reason}',
+        'user_warned_banned': '😔 {user}, afsuski **{max_warnings}** marta ogohlantirildingiz va guruhdan chiqarilasiz!\n\n🔄 Iltimos, qoidalarga rioya qiling va qaytadan qo\'shilishingiz mumkin.',
+        'user_warned': '⚠️ {user}, iltimos e\'tibor bering!\n\n**Ogohlantirishlar:** {warnings}/{max_warnings}\n**Sabab:** {reason}\n\n💡 Agar {max_warnings} ta ogohlantirishga yetsangiz, guruhdan chiqarilasiz. Qoidalarga rioya qilishingizni so\'raymiz.',
         'warn_failed_ban': '❌ Foydalanuvchini bloklashda xatolik: {error}',
 
         # Moderation actions - Unwarn
