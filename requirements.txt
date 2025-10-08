@@ -1,0 +1,11 @@
+# Telegram Bot Library
+python-telegram-bot[job-queue]==21.0
+
+# Environment Variables
+python-dotenv==1.0.1
+
+# Database (SQLite is built-in to Python, no need for additional packages)
+
+# Optional: For advanced features
+# pytz==2024.1  # Timezone support
+# redis==5.0.1  # For distributed rate limiting (optional)
