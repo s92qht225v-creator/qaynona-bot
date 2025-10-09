@@ -3470,8 +3470,8 @@ async def filter_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 # Delete the message with media
                 await update.message.delete()
 
-                # Get the media type name for display
-                media_type_name = get_text(tenant.language, media_type_key)
+                # Get the media type name for display (simple form for warnings)
+                media_type_name = get_text(tenant.language, f"{media_type_key}_name")
 
                 # Add warning to user
                 warnings = add_warning(chat_id, update.effective_user.id, f"{media_type_name} taqiqlangan")

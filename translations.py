@@ -77,6 +77,15 @@ TRANSLATIONS = {
         'media_sticker': '🎭 Stiker yuborishni taqiqlash',
         'media_animation': '🎞️ Animatsiya yuborishni taqiqlash',
         'media_videonote': '🎬 Video xabar yuborishni taqiqlash',
+
+        # Media type names for warnings (simple form)
+        'media_photo_name': 'rasm',
+        'media_video_name': 'video',
+        'media_audio_name': 'audio',
+        'media_voice_name': 'ovozli xabar',
+        'media_sticker_name': 'stiker',
+        'media_animation_name': 'animatsiya',
+        'media_videonote_name': 'video xabar',
         'max_warnings': '⚠️ Maksimal Ogohlantirishlar',
         'delete_join': '🚫 Kirish Xabarlarini O\'chirish',
         'delete_leave': '🚫 Chiqish Xabarlarini O\'chirish',
