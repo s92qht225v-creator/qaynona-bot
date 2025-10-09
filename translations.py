@@ -77,15 +77,6 @@ TRANSLATIONS = {
         'media_sticker': '🎭 Stiker yuborishni taqiqlash',
         'media_animation': '🎞️ Animatsiya yuborishni taqiqlash',
         'media_videonote': '🎬 Video xabar yuborishni taqiqlash',
-
-        # Media type names for warnings (simple form)
-        'media_photo_name': 'rasm',
-        'media_video_name': 'video',
-        'media_audio_name': 'audio',
-        'media_voice_name': 'ovozli xabar',
-        'media_sticker_name': 'stiker',
-        'media_animation_name': 'animatsiya',
-        'media_videonote_name': 'video xabar',
         'max_warnings': '⚠️ Maksimal Ogohlantirishlar',
         'delete_join': '🚫 Kirish Xabarlarini O\'chirish',
         'delete_leave': '🚫 Chiqish Xabarlarini O\'chirish',
@@ -93,6 +84,12 @@ TRANSLATIONS = {
 
         # Stats menu
         'stats_title': '📊 **Guruh Statistikasi**',
+        'global_admin_only': '⛔ Bu buyruq faqat global administratorlar uchun.',
+        'global_stats_title': 'Global Statistika',
+        'total_groups': 'Jami guruhlar',
+        'monthly_users': 'Oylik foydalanuvchilar',
+        'groups_list': 'Guruhlar ro\'yxati',
+        'language': 'Til',
         'group': 'Guruh',
         'member_activity': '👥 **A\'zolar Faolligi:**',
         'joined_7d': 'Qo\'shildi (7 kun)',
@@ -193,8 +190,8 @@ Qoidalarni buzish ogohlantirish yoki blokka olib kelishi mumkin.''',
         # Moderation actions - Warn
         'warn_reply_required': '❌ Foydalanuvchini ogohlantirish uchun xabarga javob bering.',
         'warn_admin_error': '❌ Administratorni ogohantirish mumkin emas!',
-        'user_warned_banned': '😔 {user}, afsuski **{max_warnings}** marta ogohlantirildingiz va guruhdan chiqarilasiz!\n\n🔄 Iltimos, qoidalarga rioya qiling va qaytadan qo\'shilishingiz mumkin.',
-        'user_warned': '⚠️ {user}, iltimos guruh qoidalariga amal qiling!\n\nSiz {warnings} ta ogohlantirish oldingiz!\n\n💡 Agar {max_warnings} ta ogohlantirish olsangiz, guruhdan chiqarilasiz.',
+        'user_warned_banned': '⚠️ {user} **{max_warnings}** ogohlantirishga yetdi va **bloklandi**!',
+        'user_warned': '⚠️ **Ogohlangtirildi** {user}\n\n**Ogohlantirish:** {warnings}/{max_warnings}\n**Sabab:** {reason}',
         'warn_failed_ban': '❌ Foydalanuvchini bloklashda xatolik: {error}',
 
         # Moderation actions - Unwarn
@@ -295,13 +292,13 @@ Foydalanuvchi chetlatilishidan oldin nechta ogohlantirish berishni belgilaydi.''
         'verify_kicked': '❌ {user} guruhdan chiqarildi (tasdiqlanmadi)',
 
         # Link filtering
-        'link_warning': '⚠️ {user} guruhga havola yuborgani uchun {warnings} chi martta ogohlantirildi\n\n💡 Agar {max_warnings} ta ogohlantirish olsangiz, guruhdan chiqarilasiz.',
+        'link_warning': '⚠️ **Ogohlangtirildi** {user} (havola yuborish)\n\n**Ogohlantirish:** {warnings}/{max_warnings}\n**Sabab:** Havolalar taqiqlangan',
 
         # File filtering
-        'file_warning': '⚠️ {user} guruhga fayl yuborgani uchun {warnings} chi martta ogohlantirildi\n\n💡 Agar {max_warnings} ta ogohlantirish olsangiz, guruhdan chiqarilasiz.',
+        'file_warning': '⚠️ **Ogohlangtirildi** {user} (fayl yuborish)\n\n**Ogohlantirish:** {warnings}/{max_warnings}\n**Sabab:** Fayllar taqiqlangan',
 
         # Media filtering
-        'media_warning': '⚠️ {user} guruhga {media_type} yuborgani uchun {warnings} chi martta ogohlantirildi\n\n💡 Agar {max_warnings} ta ogohlantirish olsangiz, guruhdan chiqarilasiz.',
+        'media_warning': '⚠️ **Ogohlangtirildi** {user} (media yuborish)\n\n**Ogohlantirish:** {warnings}/{max_warnings}\n**Sabab:** {media_type} taqiqlangan',
 
         # Error messages
         'user_not_found': '❌ Foydalanuvchi topilmadi. Ular guruhni tark etgan bo\'lishi mumkin.',

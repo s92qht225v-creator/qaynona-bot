@@ -6,6 +6,7 @@ Handles multiple groups with isolated configurations and data
 
 import logging
 import asyncio
+import sqlite3
 from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional
 from functools import wraps
@@ -2205,6 +2206,55 @@ async def stats_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.edit_message_text(text, reply_markup=reply_markup, parse_mode='Markdown')
 
 @rate_limit(5)
+async def globalstats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Show global statistics - only for global admins"""
+    user_id = update.effective_user.id
+
+    # Check if user is global admin
+    if not is_global_admin(user_id):
+        lang = get_user_language(user_id)
+        await update.message.reply_text(
+            get_text(lang, 'global_admin_only')
+        )
+        return
+
+    # Get all active tenants
+    all_tenants = get_all_tenants(active_only=True)
+    total_groups = len(all_tenants)
+
+    # Get monthly active users count
+    conn = sqlite3.connect(Config.DATABASE_NAME)
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT COUNT(DISTINCT user_id)
+        FROM member_activity
+        WHERE timestamp >= datetime('now', '-30 days')
+    """)
+    monthly_users = cursor.fetchone()[0]
+    conn.close()
+
+    # Get language preference
+    lang = get_user_language(user_id)
+
+    # Build statistics message
+    text = f"""
+🌐 **{get_text(lang, 'global_stats_title')}**
+
+📊 {get_text(lang, 'total_groups')}: **{total_groups}**
+👥 {get_text(lang, 'monthly_users')}: **{monthly_users:,}**
+
+**{get_text(lang, 'groups_list')}:**
+"""
+
+    # List all groups
+    for idx, tenant in enumerate(all_tenants, 1):
+        text += f"\n{idx}. {tenant.chat_title or 'Unknown Group'}"
+        text += f"\n   └ ID: `{tenant.chat_id}`"
+        text += f"\n   └ {get_text(lang, 'language')}: {tenant.language.upper()}"
+
+    await update.message.reply_text(text, parse_mode='Markdown')
+
+@rate_limit(5)
 @group_only
 @admin_only
 async def user_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -3902,6 +3952,7 @@ def main():
     application.add_handler(CommandHandler("purge", purge_messages))
     application.add_handler(CommandHandler("settings", settings_command))
     application.add_handler(CommandHandler("stats", stats_command))
+    application.add_handler(CommandHandler("globalstats", globalstats_command))
     application.add_handler(CommandHandler("info", user_info))
     application.add_handler(CommandHandler("rules", rules_command))
     application.add_handler(CommandHandler("setrules", set_rules))
