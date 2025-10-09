@@ -3392,7 +3392,7 @@ async def filter_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         parse_mode='HTML'
                     )
 
-                await asyncio.sleep(5)
+                await asyncio.sleep(10)
                 await msg.delete()
                 return
             except TelegramError as e:
@@ -3447,7 +3447,7 @@ async def filter_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         parse_mode='HTML'
                     )
 
-                await asyncio.sleep(5)
+                await asyncio.sleep(10)
                 await msg.delete()
                 return
             except TelegramError as e:
@@ -3499,7 +3499,7 @@ async def filter_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         parse_mode='HTML'
                     )
 
-                await asyncio.sleep(5)
+                await asyncio.sleep(10)
                 await msg.delete()
                 return
             except TelegramError as e:
