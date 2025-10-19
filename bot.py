@@ -3402,22 +3402,30 @@ async def filter_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 logger.error(f"Error handling flood: {e}")
 
     # Check link filtering (before word filters)
-    if tenant.antilink_enabled and update.message.text:
+    if tenant.antilink_enabled and (update.message.text or update.message.caption):
         # Check if message contains URLs/links
         has_link = False
 
-        # Check for URL entities (links, mentions, hashtags, etc.)
+        # Check for URL entities in text (links, mentions, hashtags, etc.)
         if update.message.entities:
             for entity in update.message.entities:
                 if entity.type in ['url', 'text_link', 'mention', 'text_mention']:
                     has_link = True
                     break
 
-        # Also check for common URL patterns in text
+        # Check for URL entities in caption
+        if not has_link and update.message.caption_entities:
+            for entity in update.message.caption_entities:
+                if entity.type in ['url', 'text_link', 'mention', 'text_mention']:
+                    has_link = True
+                    break
+
+        # Also check for common URL patterns in text or caption
         if not has_link:
             import re
             url_pattern = r'(?:http[s]?://|www\.|t\.me/)[^\s]+'
-            if re.search(url_pattern, update.message.text, re.IGNORECASE):
+            text_to_check = update.message.text or update.message.caption or ""
+            if re.search(url_pattern, text_to_check, re.IGNORECASE):
                 has_link = True
 
         if has_link:
@@ -3555,9 +3563,10 @@ async def filter_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
             except TelegramError as e:
                 logger.error(f"Error handling media message ({media_type_key}): {e}")
 
-    # Check word filters (only for text messages)
-    if tenant.filter_enabled and update.message.text:
-        message_text = update.message.text.lower()
+    # Check word filters (for text messages and captions)
+    if tenant.filter_enabled and (update.message.text or update.message.caption):
+        # Check both text and caption
+        message_text = (update.message.text or update.message.caption or "").lower()
         filters = get_filter_words(chat_id)
 
         for word in filters:
