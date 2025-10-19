@@ -2765,7 +2765,7 @@ async def handle_private_text(update: Update, context: ContextTypes.DEFAULT_TYPE
         # Remove all filter words
         removed_count = 0
         for word in filter_words:
-            remove_filtered_word(chat_id, word)
+            remove_filter_word(chat_id, word)
             removed_count += 1
 
         # Clear the waiting state
@@ -3244,7 +3244,7 @@ async def viewfilters_callback(update: Update, context: ContextTypes.DEFAULT_TYP
         group_title = "Unknown Group"
 
     # Get filtered words
-    filtered_words = get_filtered_words(chat_id)
+    filtered_words = get_filter_words(chat_id)
 
     if not filtered_words:
         text = f"📝 **{group_title}**\n\nHozircha filtrlangan so'zlar yo'q."
