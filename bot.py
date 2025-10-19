@@ -2238,21 +2238,23 @@ async def globalstats_command(update: Update, context: ContextTypes.DEFAULT_TYPE
 
     # Build statistics message
     text = f"""
-🌐 **{get_text(lang, 'global_stats_title')}**
+🌐 <b>{get_text(lang, 'global_stats_title')}</b>
 
-📊 {get_text(lang, 'total_groups')}: **{total_groups}**
-👥 {get_text(lang, 'monthly_users')}: **{monthly_users:,}**
+📊 {get_text(lang, 'total_groups')}: <b>{total_groups}</b>
+👥 {get_text(lang, 'monthly_users')}: <b>{monthly_users:,}</b>
 
-**{get_text(lang, 'groups_list')}:**
+<b>{get_text(lang, 'groups_list')}:</b>
 """
 
     # List all groups
+    import html
     for idx, tenant in enumerate(all_tenants, 1):
-        text += f"\n{idx}. {tenant.chat_title or 'Unknown Group'}"
-        text += f"\n   └ ID: `{tenant.chat_id}`"
+        group_title = html.escape(tenant.chat_title or 'Unknown Group')
+        text += f"\n{idx}. {group_title}"
+        text += f"\n   └ ID: <code>{tenant.chat_id}</code>"
         text += f"\n   └ {get_text(lang, 'language')}: {tenant.language.upper()}"
 
-    await update.message.reply_text(text, parse_mode='Markdown')
+    await update.message.reply_text(text, parse_mode='HTML')
 
 @rate_limit(5)
 @group_only
@@ -2707,6 +2709,7 @@ async def handle_private_text(update: Update, context: ContextTypes.DEFAULT_TYPE
         chat_id = context.user_data['waiting_for_filter']
         group_title = context.user_data.get('waiting_for_filter_group_title', 'the group')
         filter_text = update.message.text.strip().lower()
+        admin_id = update.effective_user.id
 
         # Split by comma and clean up each word
         filter_words = [word.strip() for word in filter_text.split(',') if word.strip()]
@@ -2714,7 +2717,7 @@ async def handle_private_text(update: Update, context: ContextTypes.DEFAULT_TYPE
         # Add all filter words
         added_count = 0
         for word in filter_words:
-            add_filtered_word(chat_id, word)
+            add_filter_word(chat_id, word, admin_id)
             added_count += 1
 
         # Clear the waiting state
@@ -3436,14 +3439,11 @@ async def filter_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     # Just warn the user
                     log_action(chat_id, update.effective_user.id, context.bot.id, "WARN", "Link detected (antilink)")
 
-                    msg = await context.bot.send_message(
+                    await context.bot.send_message(
                         chat_id=chat_id,
                         text=get_text(tenant.language, 'link_warning', user=update.effective_user.mention_html(), warnings=warnings, max_warnings=tenant.max_warnings),
                         parse_mode='HTML'
                     )
-
-                await asyncio.sleep(10)
-                await msg.delete()
                 return
             except TelegramError as e:
                 logger.error(f"Error handling link message: {e}")
@@ -3491,14 +3491,11 @@ async def filter_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     # Just warn the user
                     log_action(chat_id, update.effective_user.id, context.bot.id, "WARN", "File detected (antifile)")
 
-                    msg = await context.bot.send_message(
+                    await context.bot.send_message(
                         chat_id=chat_id,
                         text=get_text(tenant.language, 'file_warning', user=update.effective_user.mention_html(), warnings=warnings, max_warnings=tenant.max_warnings),
                         parse_mode='HTML'
                     )
-
-                await asyncio.sleep(10)
-                await msg.delete()
                 return
             except TelegramError as e:
                 logger.error(f"Error handling file message: {e}")
@@ -3543,14 +3540,11 @@ async def filter_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     # Just warn the user
                     log_action(chat_id, update.effective_user.id, context.bot.id, "WARN", f"Media detected: {media_type_key}")
 
-                    msg = await context.bot.send_message(
+                    await context.bot.send_message(
                         chat_id=chat_id,
                         text=get_text(tenant.language, 'media_warning', user=update.effective_user.mention_html(), warnings=warnings, max_warnings=tenant.max_warnings, media_type=media_type_name),
                         parse_mode='HTML'
                     )
-
-                await asyncio.sleep(10)
-                await msg.delete()
                 return
             except TelegramError as e:
                 logger.error(f"Error handling media message ({media_type_key}): {e}")
