@@ -47,7 +47,8 @@ from database import (
     get_member_activity_stats,
     get_user_language,
     set_user_language,
-    get_all_tenants
+    get_all_tenants,
+    get_db_connection
 )
 from translations import get_text, LANGUAGE_NAMES
 
@@ -1133,9 +1134,8 @@ async def settings_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Get all groups this bot is in and check if user is admin
     managed_groups = []
 
-    # Import database directly to query all tenants
-    import sqlite3
-    conn = sqlite3.connect('multi_tenant_moderation.db')
+    # Query all tenants from database
+    conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT chat_id, chat_title FROM tenants WHERE chat_type IN ('group', 'supergroup')")
     all_groups = cursor.fetchall()
@@ -1460,8 +1460,7 @@ async def help_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         # Get all groups where user is admin
         managed_groups = []
-        import sqlite3
-        conn = sqlite3.connect('multi_tenant_moderation.db')
+        conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT chat_id, chat_title FROM tenants WHERE chat_type IN ('group', 'supergroup')")
         all_groups = cursor.fetchall()
@@ -1514,8 +1513,7 @@ async def help_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         # Get all groups where user is admin
         managed_groups = []
-        import sqlite3
-        conn = sqlite3.connect('multi_tenant_moderation.db')
+        conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT chat_id, chat_title FROM tenants WHERE chat_type IN ('group', 'supergroup')")
         all_groups = cursor.fetchall()
@@ -1568,8 +1566,7 @@ async def help_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         # Get all groups where user is admin
         managed_groups = []
-        import sqlite3
-        conn = sqlite3.connect('multi_tenant_moderation.db')
+        conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT chat_id, chat_title FROM tenants WHERE chat_type IN ('group', 'supergroup')")
         all_groups = cursor.fetchall()
@@ -1622,8 +1619,7 @@ async def help_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         # Get all groups where user is admin
         managed_groups = []
-        import sqlite3
-        conn = sqlite3.connect('multi_tenant_moderation.db')
+        conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT chat_id, chat_title FROM tenants WHERE chat_type IN ('group', 'supergroup')")
         all_groups = cursor.fetchall()
@@ -1676,8 +1672,7 @@ async def help_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         # Get all groups where user is admin
         managed_groups = []
-        import sqlite3
-        conn = sqlite3.connect('multi_tenant_moderation.db')
+        conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT chat_id, chat_title FROM tenants WHERE chat_type IN ('group', 'supergroup')")
         all_groups = cursor.fetchall()
@@ -1730,8 +1725,7 @@ async def help_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         # Get all groups where user is admin
         managed_groups = []
-        import sqlite3
-        conn = sqlite3.connect('multi_tenant_moderation.db')
+        conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT chat_id, chat_title FROM tenants WHERE chat_type IN ('group', 'supergroup')")
         all_groups = cursor.fetchall()
@@ -1784,8 +1778,7 @@ async def help_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         # Get all groups where user is admin
         managed_groups = []
-        import sqlite3
-        conn = sqlite3.connect('multi_tenant_moderation.db')
+        conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT chat_id, chat_title FROM tenants WHERE chat_type IN ('group', 'supergroup')")
         all_groups = cursor.fetchall()
@@ -1838,8 +1831,7 @@ async def help_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         # Get all groups where user is admin
         managed_groups = []
-        import sqlite3
-        conn = sqlite3.connect('multi_tenant_moderation.db')
+        conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT chat_id, chat_title FROM tenants WHERE chat_type IN ('group', 'supergroup')")
         all_groups = cursor.fetchall()
@@ -1892,8 +1884,7 @@ async def help_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         # Get all groups where user is admin
         managed_groups = []
-        import sqlite3
-        conn = sqlite3.connect('multi_tenant_moderation.db')
+        conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT chat_id, chat_title FROM tenants WHERE chat_type IN ('group', 'supergroup')")
         all_groups = cursor.fetchall()
@@ -2041,8 +2032,7 @@ async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     # Get all groups this bot is in and check if user is admin
-    import sqlite3
-    conn = sqlite3.connect('multi_tenant_moderation.db')
+    conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT chat_id, chat_title FROM tenants WHERE chat_type IN ('group', 'supergroup')")
     all_groups = cursor.fetchall()
@@ -2357,8 +2347,7 @@ async def set_rules(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # In private chat - show list of groups to configure
     lang = get_user_language(user_id)
-    import sqlite3
-    conn = sqlite3.connect('multi_tenant_moderation.db')
+    conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT chat_id, chat_title FROM tenants WHERE chat_type IN ('group', 'supergroup')")
     all_groups = cursor.fetchall()
@@ -2459,8 +2448,7 @@ async def see_rules(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # In private chat - show list of groups to select
     lang = get_user_language(user_id)
-    import sqlite3
-    conn = sqlite3.connect('multi_tenant_moderation.db')
+    conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT chat_id, chat_title FROM tenants WHERE chat_type IN ('group', 'supergroup')")
     all_groups = cursor.fetchall()
@@ -2516,8 +2504,7 @@ async def set_welcome(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     # In private chat - show list of groups to configure
-    import sqlite3
-    conn = sqlite3.connect('multi_tenant_moderation.db')
+    conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT chat_id, chat_title FROM tenants WHERE chat_type IN ('group', 'supergroup')")
     all_groups = cursor.fetchall()
@@ -3315,8 +3302,7 @@ async def view_welcome(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # In private chat - show list of groups to select
     lang = get_user_language(user_id)
-    import sqlite3
-    conn = sqlite3.connect('multi_tenant_moderation.db')
+    conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT chat_id, chat_title FROM tenants WHERE chat_type IN ('group', 'supergroup')")
     all_groups = cursor.fetchall()
