@@ -57,8 +57,28 @@
 - When antilink is enabled, messages with @username mentions are deleted and user gets warned
 - FIXED: Commit f3797c8 "Add mention and text_mention to antilink filter to block username spam"
 
-### 9. CODE STATE
-- Current commit: f3797c8 (Add mention filter for username spam)
+### 9. CHANNEL FORWARDED MESSAGES - SKIP MODERATION
+- **Line 3380-3384**: Messages forwarded from channels to discussion groups must NOT be moderated
+- Check: `update.message.forward_origin.type == MessageOriginType.CHANNEL`
+- This allows channel posts to appear in linked discussion groups without being deleted
+- FIXED: Commit 1bd588b "Fix channel forward check for new Telegram API"
+
+### 10. BOT DEPLOYMENT
+- **Bot runs on DigitalOcean droplet (152.42.233.255) via systemd service**
+- Service name: `qaynonabot.service`
+- **NEVER run bot from local machine or background bash shells**
+- Commands:
+  - Restart: `ssh root@152.42.233.255 "systemctl restart qaynonabot"`
+  - Status: `ssh root@152.42.233.255 "systemctl status qaynonabot"`
+  - Logs: `ssh root@152.42.233.255 "journalctl -u qaynonabot -f"`
+- After code changes:
+  ```bash
+  scp bot.py root@152.42.233.255:/root/qaynona-bot/
+  ssh root@152.42.233.255 "rm -rf /root/qaynona-bot/__pycache__ && systemctl restart qaynonabot"
+  ```
+
+### 11. CODE STATE
+- Current commit: 1bd588b (Fix channel forward for new Telegram API)
 - Using SQLite (database.py), NOT PostgreSQL (database_pg.py)
 - Vercel migration was FAILED and REVERTED
 
