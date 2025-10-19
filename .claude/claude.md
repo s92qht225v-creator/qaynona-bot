@@ -51,8 +51,14 @@
 - Token: 8229904786:AAEXTzRHvW7XR1gfAls6KYACYL4-IUh1MpA
 - Server: 152.42.233.255
 
-### 8. CODE STATE
-- Current commit: bfca247 (Add globalstats)
+### 8. ANTILINK FILTER - BLOCKS USERNAME SPAM
+- **Line 3406**: Antilink filter checks for entity types: `'url'`, `'text_link'`, `'mention'`, `'text_mention'`
+- This blocks spam messages like "@testuser" which create clickable username links
+- When antilink is enabled, messages with @username mentions are deleted and user gets warned
+- FIXED: Commit f3797c8 "Add mention and text_mention to antilink filter to block username spam"
+
+### 9. CODE STATE
+- Current commit: f3797c8 (Add mention filter for username spam)
 - Using SQLite (database.py), NOT PostgreSQL (database_pg.py)
 - Vercel migration was FAILED and REVERTED
 
