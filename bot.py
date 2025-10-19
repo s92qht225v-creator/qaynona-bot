@@ -421,6 +421,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton(
             get_text(lang, 'show_help'),
             callback_data=f"show_help_{lang}"
+        )],
+        [InlineKeyboardButton(
+            get_text(lang, 'contact_admin'),
+            url="https://t.me/botmanuz"
         )]
     ]
 

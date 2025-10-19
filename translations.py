@@ -22,6 +22,7 @@ TRANSLATIONS = {
         'start_commands_text': 'Barcha buyruq va funksiyalarni ko\'rish uchun quyidagi \'Barcha buyruqular\' tugmasini bosing',
         'add_to_group': '➕ Meni guruhga qo\'shing',
         'show_help': '📚 Barcha buyruqlar',
+        'contact_admin': '👤 Admin bilan bog\'lanish',
 
         # Help menu
         'help_title': '📚 Asosiy buyruqlar',
