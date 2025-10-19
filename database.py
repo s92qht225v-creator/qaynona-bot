@@ -15,20 +15,20 @@ class TenantConfig:
     chat_id: int
     chat_title: str = ""
     chat_type: str = "group"
-    welcome_enabled: bool = True
+    welcome_enabled: bool = False  # OFF by default
     antiflood_enabled: bool = True
     filter_enabled: bool = True
-    verification_enabled: bool = True
-    antilink_enabled: bool = False  # Link filtering
-    antifile_enabled: bool = False  # File filtering
+    verification_enabled: bool = False  # OFF by default
+    antilink_enabled: bool = True  # ON by default
+    antifile_enabled: bool = True  # ON by default
     # Media filtering (individual toggles)
-    antimedia_photo: bool = False
-    antimedia_video: bool = False
-    antimedia_audio: bool = False
-    antimedia_voice: bool = False
-    antimedia_sticker: bool = False
-    antimedia_animation: bool = False
-    antimedia_videonote: bool = False
+    antimedia_photo: bool = True  # ON by default
+    antimedia_video: bool = True  # ON by default
+    antimedia_audio: bool = True  # ON by default
+    antimedia_voice: bool = True  # ON by default
+    antimedia_sticker: bool = True  # ON by default
+    antimedia_animation: bool = True  # ON by default
+    antimedia_videonote: bool = True  # ON by default
     max_warnings: int = 3
     rules_text: str = ""
     welcome_message: str = ""
@@ -60,19 +60,19 @@ def init_db():
             chat_id INTEGER PRIMARY KEY,
             chat_title TEXT,
             chat_type TEXT DEFAULT 'group',
-            welcome_enabled BOOLEAN DEFAULT 1,
+            welcome_enabled BOOLEAN DEFAULT 0,
             antiflood_enabled BOOLEAN DEFAULT 1,
             filter_enabled BOOLEAN DEFAULT 1,
-            verification_enabled BOOLEAN DEFAULT 1,
-            antilink_enabled BOOLEAN DEFAULT 0,
-            antifile_enabled BOOLEAN DEFAULT 0,
-            antimedia_photo BOOLEAN DEFAULT 0,
-            antimedia_video BOOLEAN DEFAULT 0,
-            antimedia_audio BOOLEAN DEFAULT 0,
-            antimedia_voice BOOLEAN DEFAULT 0,
-            antimedia_sticker BOOLEAN DEFAULT 0,
-            antimedia_animation BOOLEAN DEFAULT 0,
-            antimedia_videonote BOOLEAN DEFAULT 0,
+            verification_enabled BOOLEAN DEFAULT 0,
+            antilink_enabled BOOLEAN DEFAULT 1,
+            antifile_enabled BOOLEAN DEFAULT 1,
+            antimedia_photo BOOLEAN DEFAULT 1,
+            antimedia_video BOOLEAN DEFAULT 1,
+            antimedia_audio BOOLEAN DEFAULT 1,
+            antimedia_voice BOOLEAN DEFAULT 1,
+            antimedia_sticker BOOLEAN DEFAULT 1,
+            antimedia_animation BOOLEAN DEFAULT 1,
+            antimedia_videonote BOOLEAN DEFAULT 1,
             max_warnings INTEGER DEFAULT 3,
             rules_text TEXT,
             welcome_message TEXT,
