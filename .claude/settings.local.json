@@ -1,7 +1,9 @@
 {
+  "customInstructions": "CRITICAL: BEFORE making ANY code changes or uploading files, you MUST read .claude/claude.md and follow ALL rules in it. This is MANDATORY and NON-NEGOTIABLE. Failure to do this has caused repeated bugs.",
   "permissions": {
     "allow": [
-      "Bash(kill:*)"
+      "Bash(kill:*)",
+      "Bash(ssh root@152.42.233.255 \"sqlite3 /root/qaynona-bot/multi_tenant_moderation.db \"\"SELECT * FROM global_admins;\"\"\")"
     ],
     "deny": [],
     "ask": []
