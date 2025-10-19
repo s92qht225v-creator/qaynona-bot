@@ -299,7 +299,7 @@ Foydalanuvchi chetlatilishidan oldin nechta ogohlantirish berishni belgilaydi.''
         'file_warning': '⚠️ **Ogohlangtirildi** {user} (fayl yuborish)\n\n**Ogohlantirish:** {warnings}/{max_warnings}\n**Sabab:** Fayllar taqiqlangan',
 
         # Media filtering
-        'media_warning': '⚠️ **Ogohlangtirildi** {user} (media yuborish)\n\n**Ogohlantirish:** {warnings}/{max_warnings}\n**Sabab:** {media_type} taqiqlangan',
+        'media_warning': '⚠️ {user} guruhga {media_type} yuborgani uchun {warnings} chi martta ogohlantirildi\n\n💡 Agar {max_warnings} ta ogohlantirish olsangiz, guruhdan chiqarilasiz.',
 
         # Error messages
         'user_not_found': '❌ Foydalanuvchi topilmadi. Ular guruhni tark etgan bo\'lishi mumkin.',
