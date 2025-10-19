@@ -3378,8 +3378,10 @@ async def filter_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     # Don't filter messages forwarded from channels (discussion group feature)
-    if update.message.forward_from_chat and update.message.forward_from_chat.type == 'channel':
-        return
+    if update.message.forward_origin and hasattr(update.message.forward_origin, 'type'):
+        from telegram.constants import MessageOriginType
+        if update.message.forward_origin.type == MessageOriginType.CHANNEL:
+            return
 
     # Don't filter admins
     if await is_admin(update, context):
