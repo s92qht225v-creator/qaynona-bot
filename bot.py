@@ -3375,10 +3375,12 @@ async def filter_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.message.forward_origin and hasattr(update.message.forward_origin, 'type'):
         from telegram.constants import MessageOriginType
         if update.message.forward_origin.type == MessageOriginType.CHANNEL:
+            logger.info(f"Skipping channel-forwarded message in {update.effective_chat.title}")
             return
 
     # Don't filter admins
     if await is_admin(update, context):
+        logger.info(f"Skipping admin message from user {update.effective_user.id} in {update.effective_chat.title}")
         return
 
     chat_id = update.effective_chat.id
