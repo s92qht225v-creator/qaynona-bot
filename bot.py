@@ -3377,11 +3377,11 @@ async def filter_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_chat.type not in ['group', 'supergroup']:
         return
 
-    # Don't filter messages forwarded from channels (discussion group feature)
-    if update.message.forward_origin and hasattr(update.message.forward_origin, 'type'):
-        from telegram.constants import MessageOriginType
-        if update.message.forward_origin.type == MessageOriginType.CHANNEL:
-            return
+    # Don't filter messages in discussion groups (groups linked to channels)
+    # This includes both forwarded channel posts AND user comments on those posts
+    chat = update.effective_chat
+    if hasattr(chat, 'linked_chat_id') and chat.linked_chat_id is not None:
+        return
 
     # Don't filter admins
     if await is_admin(update, context):
