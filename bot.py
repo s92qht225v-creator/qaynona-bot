@@ -3403,7 +3403,7 @@ async def filter_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Check for URL entities (links, mentions, hashtags, etc.)
         if update.message.entities:
             for entity in update.message.entities:
-                if entity.type in ['url', 'text_link']:
+                if entity.type in ['url', 'text_link', 'mention', 'text_mention']:
                     has_link = True
                     break
 
