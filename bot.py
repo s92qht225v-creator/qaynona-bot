@@ -2251,7 +2251,17 @@ async def globalstats_command(update: Update, context: ContextTypes.DEFAULT_TYPE
     for idx, tenant in enumerate(all_tenants, 1):
         group_title = html.escape(tenant.chat_title or 'Unknown Group')
         text += f"\n{idx}. {group_title}"
-        text += f"\n   └ ID: <code>{tenant.chat_id}</code>"
+
+        # Try to get chat username
+        try:
+            chat = await context.bot.get_chat(tenant.chat_id)
+            if chat.username:
+                text += f"\n   └ @{chat.username}"
+            else:
+                text += f"\n   └ ID: <code>{tenant.chat_id}</code>"
+        except Exception:
+            text += f"\n   └ ID: <code>{tenant.chat_id}</code>"
+
         text += f"\n   └ {get_text(lang, 'language')}: {tenant.language.upper()}"
 
     await update.message.reply_text(text, parse_mode='HTML')
