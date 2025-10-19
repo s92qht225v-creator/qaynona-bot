@@ -3463,9 +3463,12 @@ async def filter_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     # Just warn the user
                     log_action(chat_id, update.effective_user.id, context.bot.id, "WARN", "Link detected (antilink)")
 
+                    warning_text = get_text(tenant.language, 'link_warning', user=update.effective_user.mention_html(), warnings=warnings, max_warnings=tenant.max_warnings)
+                    logger.info(f"Sending warning - Text length: {len(warning_text)}, First 100 chars: {warning_text[:100]}")
+
                     warning_msg = await context.bot.send_message(
                         chat_id=chat_id,
-                        text=get_text(tenant.language, 'link_warning', user=update.effective_user.mention_html(), warnings=warnings, max_warnings=tenant.max_warnings),
+                        text=warning_text,
                         parse_mode='HTML'
                     )
                     logger.info(f"Sent link warning to user {update.effective_user.id} in {update.effective_chat.title} - msg_id: {warning_msg.message_id}")
