@@ -2,14 +2,19 @@
 
 ## CRITICAL RULES - NEVER BREAK THESE:
 
-### 1. WARNING MESSAGES
-- **WARNING MESSAGES MUST NEVER BE DELETED**
-- Remove these lines after sending media_warning:
+### 1. WARNING MESSAGES - NEVER DELETE ANY WARNING
+- **ALL WARNING MESSAGES MUST NEVER BE DELETED**
+- This applies to:
+  - Media warnings (photos, videos, audio, etc.) - line ~3549
+  - Link warnings (antilink) - line ~3442
+  - File warnings (antifile) - line ~3494
+- Remove these lines after sending ANY warning:
   ```python
   await asyncio.sleep(10)
   await msg.delete()
   ```
-- Warning message should be sent and stay permanently
+- Warning messages should be sent and stay permanently
+- FIXED: Commit c93e7e2 "Fix: Remove auto-deletion of all warning messages"
 
 ### 2. FILE SYNCHRONIZATION
 - **ALWAYS commit changes to git after fixes**
