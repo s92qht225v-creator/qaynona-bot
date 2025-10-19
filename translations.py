@@ -293,10 +293,10 @@ Foydalanuvchi chetlatilishidan oldin nechta ogohlantirish berishni belgilaydi.''
         'verify_kicked': '❌ {user} guruhdan chiqarildi (tasdiqlanmadi)',
 
         # Link filtering
-        'link_warning': '⚠️ **Ogohlangtirildi** {user} (havola yuborish)\n\n**Ogohlantirish:** {warnings}/{max_warnings}\n**Sabab:** Havolalar taqiqlangan',
+        'link_warning': '⚠️ {user} guruhga havola yuborgani uchun {warnings} chi martta ogohlantirildi\n\n💡 Agar {max_warnings} ta ogohlantirish olsangiz, guruhdan chiqarilasiz.',
 
         # File filtering
-        'file_warning': '⚠️ **Ogohlangtirildi** {user} (fayl yuborish)\n\n**Ogohlantirish:** {warnings}/{max_warnings}\n**Sabab:** Fayllar taqiqlangan',
+        'file_warning': '⚠️ {user} guruhga fayl yuborgani uchun {warnings} chi martta ogohlantirildi\n\n💡 Agar {max_warnings} ta ogohlantirish olsangiz, guruhdan chiqarilasiz.',
 
         # Media filtering
         'media_warning': '⚠️ {user} guruhga {media_type} yuborgani uchun {warnings} chi martta ogohlantirildi\n\n💡 Agar {max_warnings} ta ogohlantirish olsangiz, guruhdan chiqarilasiz.',
