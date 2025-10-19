@@ -300,6 +300,13 @@ Foydalanuvchi chetlatilishidan oldin nechta ogohlantirish berishni belgilaydi.''
 
         # Media filtering
         'media_warning': '⚠️ {user} guruhga {media_type} yuborgani uchun {warnings} chi martta ogohlantirildi\n\n💡 Agar {max_warnings} ta ogohlantirish olsangiz, guruhdan chiqarilasiz.',
+        'media_photo_name': 'rasm',
+        'media_video_name': 'video',
+        'media_audio_name': 'audio',
+        'media_voice_name': 'ovozli xabar',
+        'media_sticker_name': 'stiker',
+        'media_animation_name': 'gif',
+        'media_videonote_name': 'video xabar',
 
         # Error messages
         'user_not_found': '❌ Foydalanuvchi topilmadi. Ular guruhni tark etgan bo\'lishi mumkin.',
