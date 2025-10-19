@@ -30,9 +30,10 @@
 ```
 
 ### 4. FILTER WORDS
-- Current filter words (3 only): общежитие, manzil, локация
 - Function: `add_filter_word(chat_id, word, admin_id)`
 - Need `admin_id = update.effective_user.id` before calling
+- NOTE: Filter words are stored in database (`tenant_filters` table)
+- You can add/remove unlimited filter words - no restrictions
 
 ### 5. GLOBAL ADMINS
 - User ID: 6461799783 (ali)
