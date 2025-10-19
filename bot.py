@@ -127,6 +127,12 @@ async def is_admin(update: Update, context: ContextTypes.DEFAULT_TYPE, user_id: 
     if user_id is None:
         user_id = update.effective_user.id
 
+    # Check if message is from anonymous admin (GroupAnonymousBot)
+    # When admins send messages anonymously, effective_user.id is 1087968824
+    if user_id == 1087968824:
+        # Anonymous admin message - always allow
+        return True
+
     # Check if global admin
     if is_global_admin(user_id):
         return True
