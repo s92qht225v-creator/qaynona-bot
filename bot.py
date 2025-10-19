@@ -3377,6 +3377,10 @@ async def filter_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_chat.type not in ['group', 'supergroup']:
         return
 
+    # Don't filter messages forwarded from channels (discussion group feature)
+    if update.message.forward_from_chat and update.message.forward_from_chat.type == 'channel':
+        return
+
     # Don't filter admins
     if await is_admin(update, context):
         return
