@@ -37,9 +37,9 @@ class TenantConfig:
     timezone: str = "UTC"
     is_active: bool = True
     # Service message deletion settings
-    delete_join_messages: bool = False
-    delete_leave_messages: bool = False
-    delete_service_messages: bool = False
+    delete_join_messages: bool = True  # ON by default
+    delete_leave_messages: bool = True  # ON by default
+    delete_service_messages: bool = True  # ON by default
 
 # ==================== DATABASE INITIALIZATION ====================
 
@@ -80,9 +80,9 @@ def init_db():
             language TEXT DEFAULT 'uz',
             timezone TEXT DEFAULT 'UTC',
             is_active BOOLEAN DEFAULT 1,
-            delete_join_messages BOOLEAN DEFAULT 0,
-            delete_leave_messages BOOLEAN DEFAULT 0,
-            delete_service_messages BOOLEAN DEFAULT 0,
+            delete_join_messages BOOLEAN DEFAULT 1,
+            delete_leave_messages BOOLEAN DEFAULT 1,
+            delete_service_messages BOOLEAN DEFAULT 1,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
