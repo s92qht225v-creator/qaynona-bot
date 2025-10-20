@@ -23,6 +23,7 @@ from telegram.ext import (
     CommandHandler,
     MessageHandler,
     CallbackQueryHandler,
+    ChatMemberHandler,
     ContextTypes,
     filters
 )
@@ -48,7 +49,11 @@ from database import (
     get_user_language,
     set_user_language,
     get_all_tenants,
-    get_db_connection
+    get_db_connection,
+    update_chat_admin,
+    remove_chat_admin,
+    get_user_admin_chats,
+    refresh_chat_admins
 )
 from translations import get_text, LANGUAGE_NAMES
 
@@ -62,6 +67,11 @@ logger = logging.getLogger(__name__)
 # In-memory storage for rate limiting (per tenant)
 tenant_flood_tracking: Dict[int, Dict[int, List[float]]] = {}
 tenant_pending_verifications: Dict[int, Dict[int, int]] = {}
+
+# Admin status cache: {(chat_id, user_id): (is_admin, timestamp)}
+# Cache admin status for 60 seconds to reduce Telegram API calls
+admin_cache: Dict[tuple, tuple] = {}
+ADMIN_CACHE_TTL = 60  # seconds
 
 # ==================== DECORATORS ====================
 
@@ -122,8 +132,20 @@ def group_only(func):
 
 # ==================== HELPER FUNCTIONS ====================
 
+def invalidate_admin_cache(chat_id: int, user_id: int = None):
+    """Invalidate admin cache for a specific user or entire chat"""
+    if user_id is not None:
+        # Invalidate specific user
+        cache_key = (chat_id, user_id)
+        admin_cache.pop(cache_key, None)
+    else:
+        # Invalidate entire chat (when we don't know which admin changed)
+        keys_to_remove = [key for key in admin_cache.keys() if key[0] == chat_id]
+        for key in keys_to_remove:
+            admin_cache.pop(key, None)
+
 async def is_admin(update: Update, context: ContextTypes.DEFAULT_TYPE, user_id: int = None) -> bool:
-    """Check if user is admin in the group"""
+    """Check if user is admin in the group (with 60s cache)"""
     if user_id is None:
         user_id = update.effective_user.id
 
@@ -137,13 +159,29 @@ async def is_admin(update: Update, context: ContextTypes.DEFAULT_TYPE, user_id: 
     if is_global_admin(user_id):
         return True
 
+    chat_id = update.effective_chat.id
+    cache_key = (chat_id, user_id)
+    now = datetime.now().timestamp()
+
+    # Check cache first
+    if cache_key in admin_cache:
+        is_admin_cached, cached_time = admin_cache[cache_key]
+        if now - cached_time < ADMIN_CACHE_TTL:
+            return is_admin_cached
+
+    # Cache miss or expired - query Telegram API
     try:
         chat_member = await context.bot.get_chat_member(
-            chat_id=update.effective_chat.id,
+            chat_id=chat_id,
             user_id=user_id
         )
-        return chat_member.status in ['creator', 'administrator']
+        is_admin_result = chat_member.status in ['creator', 'administrator']
+        # Store in cache
+        admin_cache[cache_key] = (is_admin_result, now)
+        return is_admin_result
     except TelegramError:
+        # Cache negative result too (they're not admin)
+        admin_cache[cache_key] = (False, now)
         return False
 
 async def show_settings_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, chat_id: int):
@@ -1137,28 +1175,31 @@ async def settings_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     # If in private chat, show list of groups where user is admin
-    # Get all groups this bot is in and check if user is admin
-    managed_groups = []
+    # Try to get from database cache first
+    managed_groups = get_user_admin_chats(user_id)
 
-    # Query all tenants from database
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT chat_id, chat_title FROM tenants WHERE chat_type IN ('group', 'supergroup')")
-    all_groups = cursor.fetchall()
-    conn.close()
+    # If cache is empty, fall back to checking all groups (and populate cache)
+    if not managed_groups:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT chat_id, chat_title FROM tenants WHERE chat_type IN ('group', 'supergroup')")
+        all_groups = cursor.fetchall()
+        conn.close()
 
-    # Check which groups the user is admin in
-    for group_chat_id, group_title in all_groups:
-        try:
-            chat_member = await context.bot.get_chat_member(
-                chat_id=group_chat_id,
-                user_id=user_id
-            )
-            if chat_member.status in ['creator', 'administrator']:
-                managed_groups.append((group_chat_id, group_title))
-        except TelegramError:
-            # Bot might have been removed from group or can't check permissions
-            continue
+        # Check which groups the user is admin in
+        for group_chat_id, group_title in all_groups:
+            try:
+                chat_member = await context.bot.get_chat_member(
+                    chat_id=group_chat_id,
+                    user_id=user_id
+                )
+                if chat_member.status in ['creator', 'administrator']:
+                    managed_groups.append((group_chat_id, group_title))
+                    # Update cache
+                    update_chat_admin(group_chat_id, user_id, chat_member.status)
+            except TelegramError:
+                # Bot might have been removed from group or can't check permissions
+                continue
 
     if not managed_groups:
         await update.message.reply_text(
@@ -2037,25 +2078,30 @@ async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-    # Get all groups this bot is in and check if user is admin
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT chat_id, chat_title FROM tenants WHERE chat_type IN ('group', 'supergroup')")
-    all_groups = cursor.fetchall()
-    conn.close()
+    # Get groups where user is admin (from cache)
+    managed_groups = get_user_admin_chats(user_id)
 
-    # Check which groups the user is admin in
-    managed_groups = []
-    for group_chat_id, group_title in all_groups:
-        try:
-            chat_member = await context.bot.get_chat_member(
-                chat_id=group_chat_id,
-                user_id=user_id
-            )
-            if chat_member.status in ['creator', 'administrator']:
-                managed_groups.append((group_chat_id, group_title))
-        except TelegramError:
-            continue
+    # If cache is empty, fall back to checking all groups
+    if not managed_groups:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT chat_id, chat_title FROM tenants WHERE chat_type IN ('group', 'supergroup')")
+        all_groups = cursor.fetchall()
+        conn.close()
+
+        # Check which groups the user is admin in
+        for group_chat_id, group_title in all_groups:
+            try:
+                chat_member = await context.bot.get_chat_member(
+                    chat_id=group_chat_id,
+                    user_id=user_id
+                )
+                if chat_member.status in ['creator', 'administrator']:
+                    managed_groups.append((group_chat_id, group_title))
+                    # Update cache
+                    update_chat_admin(group_chat_id, user_id, chat_member.status)
+            except TelegramError:
+                continue
 
     if not managed_groups:
         await update.message.reply_text(
@@ -3603,6 +3649,32 @@ async def filter_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # ==================== SERVICE MESSAGE HANDLING ====================
 
+async def handle_chat_member_update(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle chat member updates (admin promotions/demotions) to update caches"""
+    if not update.chat_member:
+        return
+
+    chat_id = update.chat_member.chat.id
+    user_id = update.chat_member.new_chat_member.user.id
+    old_status = update.chat_member.old_chat_member.status
+    new_status = update.chat_member.new_chat_member.status
+
+    # Check if admin status changed
+    old_is_admin = old_status in ['creator', 'administrator']
+    new_is_admin = new_status in ['creator', 'administrator']
+
+    if old_is_admin != new_is_admin:
+        # Admin status changed - invalidate memory cache
+        invalidate_admin_cache(chat_id, user_id)
+
+        # Update database cache
+        if new_is_admin:
+            update_chat_admin(chat_id, user_id, new_status)
+            logger.info(f"User {user_id} promoted to {new_status} in chat {chat_id}")
+        else:
+            remove_chat_admin(chat_id, user_id)
+            logger.info(f"User {user_id} demoted from admin in chat {chat_id}")
+
 async def handle_service_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle all service messages (join/leave/etc)"""
     if not update.message:
@@ -4015,6 +4087,12 @@ def main():
         filters.StatusUpdate.NEW_CHAT_TITLE |
         filters.StatusUpdate.PINNED_MESSAGE,
         handle_service_messages
+    ))
+
+    # Chat member updates (for admin cache invalidation)
+    application.add_handler(ChatMemberHandler(
+        handle_chat_member_update,
+        ChatMemberHandler.CHAT_MEMBER
     ))
 
     # Callback handlers

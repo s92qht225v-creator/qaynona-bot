@@ -161,6 +161,18 @@ def init_db():
         )
     ''')
 
+    # Chat admins cache (for performance optimization)
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS chat_admins (
+            chat_id INTEGER,
+            user_id INTEGER,
+            status TEXT,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (chat_id, user_id),
+            FOREIGN KEY (chat_id) REFERENCES tenants (chat_id)
+        )
+    ''')
+
     # Add initial global admins from config
     for admin_id in Config.GLOBAL_ADMIN_IDS:
         cursor.execute('''
@@ -771,7 +783,61 @@ def delete_tenant_data(chat_id: int):
     cursor.execute("DELETE FROM tenant_warnings WHERE tenant_id = ?", (chat_id,))
     cursor.execute("DELETE FROM tenant_filters WHERE tenant_id = ?", (chat_id,))
     cursor.execute("DELETE FROM tenant_logs WHERE tenant_id = ?", (chat_id,))
+    cursor.execute("DELETE FROM chat_admins WHERE chat_id = ?", (chat_id,))
     cursor.execute("DELETE FROM tenants WHERE chat_id = ?", (chat_id,))
+
+    conn.commit()
+    conn.close()
+
+# ==================== CHAT ADMINS CACHE ====================
+
+def update_chat_admin(chat_id: int, user_id: int, status: str):
+    """Update or add a chat admin to the database cache"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        INSERT OR REPLACE INTO chat_admins (chat_id, user_id, status, updated_at)
+        VALUES (?, ?, ?, datetime('now'))
+    ''', (chat_id, user_id, status))
+
+    conn.commit()
+    conn.close()
+
+def remove_chat_admin(chat_id: int, user_id: int):
+    """Remove a user from chat admins cache"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute('DELETE FROM chat_admins WHERE chat_id = ? AND user_id = ?', (chat_id, user_id))
+
+    conn.commit()
+    conn.close()
+
+def get_user_admin_chats(user_id: int) -> List[tuple]:
+    """Get all chats where user is an admin (from cache)"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        SELECT ca.chat_id, t.chat_title
+        FROM chat_admins ca
+        JOIN tenants t ON ca.chat_id = t.chat_id
+        WHERE ca.user_id = ? AND ca.status IN ('creator', 'administrator')
+        ORDER BY t.chat_title
+    ''', (user_id,))
+
+    results = cursor.fetchall()
+    conn.close()
+
+    return [(row['chat_id'], row['chat_title']) for row in results]
+
+def refresh_chat_admins(chat_id: int):
+    """Clear all admins for a chat (to force refresh from Telegram API)"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute('DELETE FROM chat_admins WHERE chat_id = ?', (chat_id,))
 
     conn.commit()
     conn.close()
