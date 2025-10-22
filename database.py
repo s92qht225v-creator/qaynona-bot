@@ -33,7 +33,7 @@ class TenantConfig:
     rules_text: str = ""
     welcome_message: str = ""
     welcome_message_duration: int = 0  # Duration in seconds to keep welcome message (0 = don't delete)
-    language: str = "eng"  # Default to English (uz, ru, eng)
+    language: str = "uz"  # Default to Uzbek (uz, ru, eng)
     timezone: str = "UTC"
     is_active: bool = True
     # Service message deletion settings
@@ -53,6 +53,12 @@ def init_db():
     """Initialize multi-tenant database"""
     conn = get_db_connection()
     cursor = conn.cursor()
+    
+    # Enable WAL mode for better concurrency and performance
+    cursor.execute("PRAGMA journal_mode=WAL")
+    cursor.execute("PRAGMA synchronous=NORMAL")
+    cursor.execute("PRAGMA cache_size=10000")  # 10MB cache
+    cursor.execute("PRAGMA temp_store=MEMORY")
 
     # Tenants table (one row per group)
     cursor.execute('''
@@ -208,6 +214,13 @@ def init_db():
             # Column already exists
             pass
 
+    # Create performance indexes
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_tenant_warnings_lookup ON tenant_warnings(tenant_id, user_id)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_tenant_filters_lookup ON tenant_filters(tenant_id)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_tenant_logs_lookup ON tenant_logs(tenant_id, timestamp DESC)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_chat_admins_lookup ON chat_admins(chat_id, user_id)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_member_activity_lookup ON member_activity(tenant_id, timestamp DESC)")
+    
     conn.commit()
     conn.close()
     print("✅ Multi-tenant database initialized successfully!")

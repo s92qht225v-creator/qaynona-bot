@@ -7,8 +7,9 @@ Handles multiple groups with isolated configurations and data
 import logging
 import asyncio
 import sqlite3
+import re
 from datetime import datetime, timedelta, timezone
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 from functools import wraps
 
 from telegram import (
@@ -73,6 +74,19 @@ tenant_pending_verifications: Dict[int, Dict[int, int]] = {}
 admin_cache: Dict[tuple, tuple] = {}
 ADMIN_CACHE_TTL = 60  # seconds
 
+# Tenant configuration cache: {chat_id: (TenantConfig, timestamp)}
+# Cache tenant configs for 5 minutes to reduce database queries
+tenant_cache: Dict[int, Tuple] = {}
+TENANT_CACHE_TTL = 300  # 5 minutes
+
+# Filter words cache: {chat_id: (List[str], timestamp)}
+# Cache filter words for 10 minutes
+filter_words_cache: Dict[int, Tuple[List[str], float]] = {}
+FILTER_CACHE_TTL = 600  # 10 minutes
+
+# Compiled regex pattern for URL detection (compile once, reuse everywhere)
+URL_PATTERN = re.compile(r'(?:http[s]?://|www\.|t\.me/)[^\s]+', re.IGNORECASE)
+
 # ==================== DECORATORS ====================
 
 def rate_limit(seconds: int = 2):
@@ -131,6 +145,42 @@ def group_only(func):
     return wrapped
 
 # ==================== HELPER FUNCTIONS ====================
+
+def get_cached_tenant(chat_id: int, chat_title: str = "", chat_type: str = "group"):
+    """Get tenant config with caching to reduce database queries"""
+    now = datetime.now().timestamp()
+    
+    if chat_id in tenant_cache:
+        config, cached_time = tenant_cache[chat_id]
+        if now - cached_time < TENANT_CACHE_TTL:
+            return config
+    
+    # Cache miss or expired - query database
+    config = get_or_create_tenant(chat_id, chat_title, chat_type)
+    tenant_cache[chat_id] = (config, now)
+    return config
+
+def invalidate_tenant_cache(chat_id: int):
+    """Invalidate tenant cache when config changes"""
+    tenant_cache.pop(chat_id, None)
+
+def get_cached_filter_words(chat_id: int) -> List[str]:
+    """Get filter words with caching to reduce database queries"""
+    now = datetime.now().timestamp()
+    
+    if chat_id in filter_words_cache:
+        words, cached_time = filter_words_cache[chat_id]
+        if now - cached_time < FILTER_CACHE_TTL:
+            return words
+    
+    # Cache miss or expired - query database
+    words = get_filter_words(chat_id)
+    filter_words_cache[chat_id] = (words, now)
+    return words
+
+def invalidate_filter_cache(chat_id: int):
+    """Invalidate filter cache when words are added/removed"""
+    filter_words_cache.pop(chat_id, None)
 
 def invalidate_admin_cache(chat_id: int, user_id: int = None):
     """Invalidate admin cache for a specific user or entire chat"""
@@ -873,6 +923,7 @@ async def add_filter(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Only one group - add filter directly
         chat_id = managed_groups[0][0]
         if add_filter_word(chat_id, word, admin_id):
+            invalidate_filter_cache(chat_id)
             await update.message.reply_text(get_text(lang, 'filter_added', word=word), parse_mode='Markdown')
         else:
             await update.message.reply_text(get_text(lang, 'filter_exists', word=word), parse_mode='Markdown')
@@ -932,6 +983,7 @@ async def remove_filter(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Only one group - remove filter directly
         chat_id = managed_groups[0][0]
         if remove_filter_word(chat_id, word):
+            invalidate_filter_cache(chat_id)
             await update.message.reply_text(get_text(lang, 'filter_removed', word=word), parse_mode='Markdown')
         else:
             await update.message.reply_text(get_text(lang, 'filter_not_found', word=word), parse_mode='Markdown')
@@ -1331,36 +1383,52 @@ async def settings_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Toggle settings based on callback
     if base_action == "toggle_welcome":
         update_tenant_config(target_chat_id, welcome_enabled=not tenant.welcome_enabled)
+        invalidate_tenant_cache(target_chat_id)
     elif base_action == "toggle_antiflood":
         update_tenant_config(target_chat_id, antiflood_enabled=not tenant.antiflood_enabled)
+        invalidate_tenant_cache(target_chat_id)
     elif base_action == "toggle_filter":
         update_tenant_config(target_chat_id, filter_enabled=not tenant.filter_enabled)
+        invalidate_tenant_cache(target_chat_id)
     elif base_action == "toggle_antilink":
         update_tenant_config(target_chat_id, antilink_enabled=not tenant.antilink_enabled)
+        invalidate_tenant_cache(target_chat_id)
     elif base_action == "toggle_antifile":
         update_tenant_config(target_chat_id, antifile_enabled=not tenant.antifile_enabled)
+        invalidate_tenant_cache(target_chat_id)
     elif base_action == "toggle_verification":
         update_tenant_config(target_chat_id, verification_enabled=not tenant.verification_enabled)
+        invalidate_tenant_cache(target_chat_id)
     elif base_action == "toggle_antimedia_photo":
         update_tenant_config(target_chat_id, antimedia_photo=not tenant.antimedia_photo)
+        invalidate_tenant_cache(target_chat_id)
     elif base_action == "toggle_antimedia_video":
         update_tenant_config(target_chat_id, antimedia_video=not tenant.antimedia_video)
+        invalidate_tenant_cache(target_chat_id)
     elif base_action == "toggle_antimedia_audio":
         update_tenant_config(target_chat_id, antimedia_audio=not tenant.antimedia_audio)
+        invalidate_tenant_cache(target_chat_id)
     elif base_action == "toggle_antimedia_voice":
         update_tenant_config(target_chat_id, antimedia_voice=not tenant.antimedia_voice)
+        invalidate_tenant_cache(target_chat_id)
     elif base_action == "toggle_antimedia_sticker":
         update_tenant_config(target_chat_id, antimedia_sticker=not tenant.antimedia_sticker)
+        invalidate_tenant_cache(target_chat_id)
     elif base_action == "toggle_antimedia_animation":
         update_tenant_config(target_chat_id, antimedia_animation=not tenant.antimedia_animation)
+        invalidate_tenant_cache(target_chat_id)
     elif base_action == "toggle_antimedia_videonote":
         update_tenant_config(target_chat_id, antimedia_videonote=not tenant.antimedia_videonote)
+        invalidate_tenant_cache(target_chat_id)
     elif base_action == "toggle_delete_join":
         update_tenant_config(target_chat_id, delete_join_messages=not tenant.delete_join_messages)
+        invalidate_tenant_cache(target_chat_id)
     elif base_action == "toggle_delete_leave":
         update_tenant_config(target_chat_id, delete_leave_messages=not tenant.delete_leave_messages)
+        invalidate_tenant_cache(target_chat_id)
     elif base_action == "toggle_delete_service":
         update_tenant_config(target_chat_id, delete_service_messages=not tenant.delete_service_messages)
+        invalidate_tenant_cache(target_chat_id)
     elif base_action == "change_warnings":
         # Show warning options with chat_id embedded
         warning_label = get_text(tenant.language, 'warnings')
@@ -1379,6 +1447,7 @@ async def settings_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Extract the warning number from "set_warnings_N"
         new_max = int(base_action.split('_')[2])
         update_tenant_config(target_chat_id, max_warnings=new_max)
+        invalidate_tenant_cache(target_chat_id)
         await query.answer(
             get_text(tenant.language, 'max_warnings_set').format(new_max),
             show_alert=True
@@ -1403,6 +1472,7 @@ async def settings_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Extract the duration from "set_welcome_duration_N"
         new_duration = int(base_action.split('_')[3])
         update_tenant_config(target_chat_id, welcome_message_duration=new_duration)
+        invalidate_tenant_cache(target_chat_id)
         await query.answer(
             get_text(tenant.language, 'welcome_duration_set').format(duration=new_duration),
             show_alert=True
@@ -2772,6 +2842,10 @@ async def handle_private_text(update: Update, context: ContextTypes.DEFAULT_TYPE
         for word in filter_words:
             add_filter_word(chat_id, word, admin_id)
             added_count += 1
+        
+        # Invalidate cache after adding words
+        if added_count > 0:
+            invalidate_filter_cache(chat_id)
 
         # Clear the waiting state
         del context.user_data['waiting_for_filter']
@@ -2820,6 +2894,10 @@ async def handle_private_text(update: Update, context: ContextTypes.DEFAULT_TYPE
         for word in filter_words:
             remove_filter_word(chat_id, word)
             removed_count += 1
+        
+        # Invalidate cache after removing words
+        if removed_count > 0:
+            invalidate_filter_cache(chat_id)
 
         # Clear the waiting state
         del context.user_data['waiting_for_unfilter']
@@ -3430,7 +3508,7 @@ async def filter_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     chat_id = update.effective_chat.id
-    tenant = get_or_create_tenant(chat_id, update.effective_chat.title, update.effective_chat.type)
+    tenant = get_cached_tenant(chat_id, update.effective_chat.title, update.effective_chat.type)
 
     # Check antiflood
     if tenant.antiflood_enabled:
@@ -3478,10 +3556,8 @@ async def filter_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         # Also check for common URL patterns in text or caption
         if not has_link:
-            import re
-            url_pattern = r'(?:http[s]?://|www\.|t\.me/)[^\s]+'
             text_to_check = update.message.text or update.message.caption or ""
-            if re.search(url_pattern, text_to_check, re.IGNORECASE):
+            if URL_PATTERN.search(text_to_check):
                 has_link = True
 
         if has_link:
@@ -3627,7 +3703,7 @@ async def filter_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if tenant.filter_enabled and (update.message.text or update.message.caption):
         # Check both text and caption
         message_text = (update.message.text or update.message.caption or "").lower()
-        filters = get_filter_words(chat_id)
+        filters = get_cached_filter_words(chat_id)
 
         for word in filters:
             if word in message_text:
@@ -3685,7 +3761,7 @@ async def handle_service_messages(update: Update, context: ContextTypes.DEFAULT_
         return
 
     chat_id = update.effective_chat.id
-    tenant = get_or_create_tenant(chat_id, update.effective_chat.title, update.effective_chat.type)
+    tenant = get_cached_tenant(chat_id, update.effective_chat.title, update.effective_chat.type)
 
     try:
         # Handle user joined messages
