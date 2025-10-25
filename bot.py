@@ -3503,7 +3503,9 @@ async def filter_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
 
     # Don't filter admins
-    if await is_admin(update, context):
+    # Note: When forwarding messages with hidden sender, effective_user.id = 777000 (Telegram Service)
+    # We need to skip these because they're forwarded by admins
+    if await is_admin(update, context) or update.effective_user.id == 777000:
         logger.info(f"Skipping admin message from user {update.effective_user.id} in {update.effective_chat.title}")
         return
 
